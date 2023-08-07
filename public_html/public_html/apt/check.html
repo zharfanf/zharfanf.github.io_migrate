@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body onload = "JavaScript:AutoRefresh(60000);">
+    <p>This page will refresh every 60 seconds.</p>
+	<div id="divResults"></div>
+</body>
+</html>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+
+    function AutoRefresh( t ) {
+       setTimeout("location.reload(true);", t);
+    }
+
+	// this will parse the raw html to get the list of imgs
+	function parse(str){
+		// Get the imgs name on the directory
+		var regex = /name">/gi, result, list_of_apts = [];
+		while ( (result = regex.exec(str)) ) {
+		    var id = result.index + 5;
+		    
+		    var apt_name = "";
+		    while (str.charAt(id+1) != '<'){
+		    	apt_name += str.charAt(id+1);
+		    	id = id+1;
+		    }
+		    // alert(apt_name);
+		    list_of_apts.push(apt_name.trim());
+		}
+		// alert(list_of_apts);
+		return list_of_apts;
+	}
+
+	// this will parse the raw html to get the list of imgs
+	function parseAvailable(str){
+		// Get the imgs name on the directory
+		var regex = /count">/gi, result, list_of_apts = [];
+		while ( (result = regex.exec(str)) ) {
+		    var id = result.index + 6;
+		    
+		    var apt_name = "";
+		    while (str.charAt(id+1) != '<'){
+		    	apt_name += str.charAt(id+1);
+		    	id = id+1;
+		    }
+		    // alert(apt_name);
+		    list_of_apts.push(apt_name.trim());
+		}
+		// alert(list_of_apts);
+		return list_of_apts;
+	}
+
+	function displayApts(url,list_of_apts, list_of_avail) {
+
+	  var html = '<table>';
+
+	  $.each(list_of_apts, function(i, apt) {
+	  	// console.log("|"+list_of_avail[i]+"|")
+	  	if (apt.localeCompare("One Bedroom") == 0){
+	  		if (list_of_avail[i].localeCompare("(Contact for Availability)") == -1){
+	  			// alert("check the rp apartments! One-br just become available!")
+	  			notifyMe(url)
+	  		}
+		    html += '<tr><td>' + apt + '</td><td>' + list_of_avail[i] + '</td></tr>';
+	  	}
+	  	if (apt.localeCompare("Studio") == 0){
+	  		if (list_of_avail[i].localeCompare("(Contact for Availability)") == -1){
+	  			// notifyMe(url)
+	  		}
+		    html += '<tr><td>' + apt + '</td><td>' + list_of_avail[i] + '</td></tr>';
+		}
+	  });
+
+	  html += '</table>';
+
+	  $("#divResults").append(html);
+	}
+
+	function notifyMe(url) {
+		// alert(url)
+	  var myWindow = window.open(url, "", "width=200,height=100");
+	  myWindow.document.write("<h1>One Bedroom become AVAILABLE!</h1>");
+	  myWindow.focus();
+	}
+
+	// Get the raw html string from Riza's img dir
+	function getAvailableApt(url){
+		let xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4 && this.status === 200) {
+			  var response = this.responseText;
+
+			  var list_of_apts = parse(response);
+			  var list_of_avail = parseAvailable(response);
+
+	  		  $("#divResults").append("<br>"+url);
+			  displayApts(url,list_of_apts, list_of_avail);
+			}
+		}
+		xhr.open("GET", "https://cors-anywhere.herokuapp.com/"+url+"");
+		xhr.setRequestHeader("Accept", 'application/json');
+		xhr.send();
+	}
+
+
+	var urls = [
+				// "6011-27-s-ingleside-ave",
+				"6022-s-drexel-ave",
+				"fairfax",
+				"6054-56-s-ingleside-ave-920-28-e-61st-st",
+				"6051-57-s-drexel-ave-906-14-e-61st-st",
+				"6019-s-ingleside-avenue",
+				// "6044-52-s-ingleside-ave",
+				"cloisters",
+				"5482-s-greenwood-ave",
+				"5301-23-s-kimbark-ave"]
+	for (var i = 0; i < urls.length; i++) {
+		getAvailableApt("http://rp.uchicago.edu/"+urls[i]+"/floorplans.aspx")
+	}
+
+
+</script>
+
+<!-- 
+				"6022-s-drexel-ave",
+				"fairfax",
+				"6054-56-s-ingleside-ave-920-28-e-61st-st",
+				"6051-57-s-drexel-ave-906-14-e-61st-st",
+				"6019-s-ingleside-avenue",
+				"6044-52-s-ingleside-ave",
+				"stein",
+				"cloisters",
+				"5482-s-greenwood-ave",
+				"5301-23-s-kimbark-ave" -->
